@@ -78,18 +78,17 @@
     }
     .order-toggle input{position:absolute;opacity:0;pointer-events:none}
     .order-toggle label{
-      flex:0 0 50%;min-width:0;display:flex;align-items:center;justify-content:center;
-      padding:11px 4px;cursor:pointer;border-radius:999px;white-space:nowrap;
+      flex:1 1 auto;min-width:0;display:flex;align-items:center;justify-content:center;
+      padding:11px 14px;cursor:pointer;border-radius:999px;white-space:nowrap;
       font-weight:700;font-size:.95rem;color:var(--ink-soft);position:relative;z-index:2;
       transition:color .25s;user-select:none;
     }
     .toggle-indicator{
       position:absolute;top:5px;left:5px;width:calc(50% - 5px);height:calc(100% - 10px);
       background:linear-gradient(135deg,var(--accent),var(--accent-dark));border-radius:999px;z-index:1;
-      transition:transform .3s cubic-bezier(.4,0,.2,1);
+      transition:left .3s cubic-bezier(.4,0,.2,1),width .3s cubic-bezier(.4,0,.2,1);
       box-shadow:0 3px 10px rgba(13,58,120,.35);
     }
-    #typePreventivo:checked ~ .toggle-indicator{transform:translateX(100%)}
     #typeOrdine:checked ~ label[for="typeOrdine"],
     #typePreventivo:checked ~ label[for="typePreventivo"]{color:#fff}
 
@@ -99,12 +98,14 @@
       border:2px solid #1c1c1c;box-shadow:var(--shadow);background:#fff;flex:1;min-width:0;
     }
     .targa .band{
-      width:34px;flex-shrink:0;background:var(--targa-blu);color:#ffd200;
-      display:flex;flex-direction:column;align-items:center;justify-content:space-between;
-      padding:6px 0;font-size:.6rem;font-weight:700;
+      width:36px;flex-shrink:0;background:var(--targa-blu);
+      display:flex;flex-direction:column;align-items:center;justify-content:center;
+      gap:3px;padding:5px 0;
     }
-    .targa .band .stars{font-size:.55rem;letter-spacing:-1px;text-align:center}
-    .targa .band .country{color:#fff;font-size:.85rem;font-weight:900}
+    .targa .eu-stars{width:24px;height:24px;display:block}
+    .targa .band .country{color:#fff;font-size:.95rem;font-weight:900;line-height:1}
+    .targa .band-right{width:30px}
+    .targa .ring{width:20px;height:20px;border:2px solid #ffd200;border-radius:50%}
     .targa input{
       flex:1;border:0;outline:0;min-width:0;
       font-family:inherit;font-size:1.6rem;font-weight:800;letter-spacing:.35em;
@@ -256,6 +257,10 @@
       .sections{grid-template-columns:1fr}
       .brand h1{font-size:.95rem}
       .targa input{font-size:1.3rem;letter-spacing:.25em}
+      .targa .band{width:30px}
+      .targa .eu-stars{width:20px;height:20px}
+      .targa .band-right{width:24px}
+      .targa .ring{width:15px;height:15px}
       .cam-btn{width:58px}
       .order-toggle label{font-size:.85rem}
     }
@@ -277,6 +282,7 @@
     <symbol id="i-close" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
       <path d="M18 6 6 18M6 6l12 12"/>
     </symbol>
+    <path id="i-star" d="M0,-2.5 0.59,-0.81 2.38,-0.77 0.95,0.31 1.47,2.02 0,1 -1.47,2.02 -0.95,0.31 -2.38,-0.77 -0.59,-0.81Z"/>
   </svg>
 
   <header class="topbar">
@@ -314,9 +320,28 @@
         <div class="panel-title"><span class="icon">🚗</span><span data-i18n="secVehicle">Veicolo</span></div>
         <div class="input-row">
           <div class="targa">
-            <div class="band"><span class="stars">★★★<br>★&nbsp;&nbsp;★<br>★★★</span><span class="country">I</span></div>
+            <div class="band band-left">
+              <svg class="eu-stars" viewBox="-12 -12 24 24" aria-hidden="true">
+                <g fill="#ffd200">
+                  <use href="#i-star" transform="rotate(0) translate(0,-8.5)"/>
+                  <use href="#i-star" transform="rotate(30) translate(0,-8.5)"/>
+                  <use href="#i-star" transform="rotate(60) translate(0,-8.5)"/>
+                  <use href="#i-star" transform="rotate(90) translate(0,-8.5)"/>
+                  <use href="#i-star" transform="rotate(120) translate(0,-8.5)"/>
+                  <use href="#i-star" transform="rotate(150) translate(0,-8.5)"/>
+                  <use href="#i-star" transform="rotate(180) translate(0,-8.5)"/>
+                  <use href="#i-star" transform="rotate(210) translate(0,-8.5)"/>
+                  <use href="#i-star" transform="rotate(240) translate(0,-8.5)"/>
+                  <use href="#i-star" transform="rotate(270) translate(0,-8.5)"/>
+                  <use href="#i-star" transform="rotate(300) translate(0,-8.5)"/>
+                  <use href="#i-star" transform="rotate(330) translate(0,-8.5)"/>
+                </g>
+              </svg>
+              <span class="country">I</span>
+            </div>
             <input id="plateInput" type="text" autocomplete="off" autocapitalize="characters"
                    spellcheck="false" maxlength="8" data-i18n-ph="platePH" placeholder="Targa · es. AB123CD">
+            <div class="band band-right"><span class="ring" aria-hidden="true"></span></div>
           </div>
           <button type="button" id="plateCam" class="cam-btn" data-i18n-title="camTitle" title="Scansiona con la fotocamera">
             <svg class="ico" aria-hidden="true"><use href="#i-camera"/></svg>
@@ -535,6 +560,17 @@
   const ocrLoader = $('ocrLoader');
   const toast = $('toast');
   const main = document.querySelector('main.container');
+  const toggleIndicator = document.querySelector('.toggle-indicator');
+
+  // size the dark pill to exactly match the active toggle label
+  function positionToggle(){
+    const checked = form.querySelector('input[name="orderType"]:checked');
+    if (!checked || !toggleIndicator) return;
+    const label = form.querySelector('label[for="' + checked.id + '"]');
+    if (!label) return;
+    toggleIndicator.style.left = label.offsetLeft + 'px';
+    toggleIndicator.style.width = label.offsetWidth + 'px';
+  }
 
   // ---------------- apply language (text swap only, no re-render) ----------------
   function applyLang(lang){
@@ -561,6 +597,7 @@
     }
 
     try { localStorage.setItem('partsapp-lang', lang); } catch(e){}
+    positionToggle();   // label widths change with the language
   }
 
   // ---------------- toast ----------------
@@ -773,6 +810,7 @@
         showToast(L.sentOk, 'ok');
         form.reset();
         $('typeOrdine').checked = true;
+        positionToggle();
       } else {
         showToast((json && json.message) ? L.sentErr + ' (' + json.message + ')' : L.sentErr, 'err');
       }
@@ -787,6 +825,10 @@
   // ---------------- wire up (each listener bound exactly once) ----------------
   $('lang-it').addEventListener('click', () => applyLang('it'));
   $('lang-de').addEventListener('click', () => applyLang('de'));
+
+  form.querySelectorAll('input[name="orderType"]').forEach(r => r.addEventListener('change', positionToggle));
+  window.addEventListener('resize', positionToggle);
+  window.addEventListener('load', positionToggle);
 
   $('plateCam').addEventListener('click', () => openCamera('plateInput'));
   $('articleCam').addEventListener('click', () => openCamera('articleInput'));
