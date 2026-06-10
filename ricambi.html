@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
-  <title>PartsApp – Ricambi Auto | HVS &amp; TIZ</title>
+  <title>PartsApp – Ricambi Auto | HVS</title>
   <style>
     :root{
       --accent:#0d3a78;         /* blu scuro */
@@ -78,7 +78,8 @@
     }
     .order-toggle input{position:absolute;opacity:0;pointer-events:none}
     .order-toggle label{
-      flex:1;text-align:center;padding:11px 8px;cursor:pointer;border-radius:999px;
+      flex:0 0 50%;min-width:0;display:flex;align-items:center;justify-content:center;
+      padding:11px 4px;cursor:pointer;border-radius:999px;white-space:nowrap;
       font-weight:700;font-size:.95rem;color:var(--ink-soft);position:relative;z-index:2;
       transition:color .25s;user-select:none;
     }
@@ -256,6 +257,10 @@
       .brand h1{font-size:.95rem}
       .targa input{font-size:1.3rem;letter-spacing:.25em}
       .cam-btn{width:58px}
+      .order-toggle label{font-size:.85rem}
+    }
+    @media(max-width:380px){
+      .order-toggle label{font-size:.78rem}
     }
   </style>
 </head>
@@ -279,7 +284,7 @@
     <div class="topbar-inner">
       <div class="brand">
         <div class="brand-badge">🏁</div>
-        <h1>PartsApp<small data-i18n="tagline">Ricambi auto · HVS &amp; TIZ</small></h1>
+        <h1>PartsApp<small data-i18n="tagline">Ricambi auto · HVS</small></h1>
       </div>
       <nav class="lang-switch" aria-label="Lingua / Sprache">
         <button type="button" id="lang-it" aria-label="Italiano">
@@ -418,7 +423,7 @@
     </form>
   </main>
 
-  <footer>PartsApp · HVS &amp; TIZ · <span data-i18n="footer">Servizio ricambi per officine in Alto Adige / Italia</span></footer>
+  <footer>PartsApp · HVS · <span data-i18n="footer">Servizio ricambi per officine in Alto Adige / Italia</span></footer>
 
   <!-- camera overlay -->
   <div id="cameraOverlay" aria-hidden="true" role="dialog" aria-modal="true">
@@ -449,7 +454,7 @@
   // ---------------- i18n ----------------
   const I18N = {
     it: {
-      tagline:'Ricambi auto · HVS & TIZ',
+      tagline:'Ricambi auto · HVS',
       typeOrder:'🛒 Ordine', typeQuote:'📄 Preventivo',
       secVehicle:'Veicolo', platePH:'Targa · es. AB123CD',
       plateHint:'Inserire la targa oppure scansionarla con la fotocamera (formato italiano: AB123CD).',
@@ -483,8 +488,8 @@
       ]
     },
     de: {
-      tagline:'KFZ-Ersatzteile · HVS & TIZ',
-      typeOrder:'🛒 Bestellung', typeQuote:'📄 Kostenvoranschlag',
+      tagline:'KFZ-Ersatzteile · HVS',
+      typeOrder:'🛒 Bestellen', typeQuote:'📄 Kostenvoranschlag',
       secVehicle:'Fahrzeug', platePH:'Kennzeichen · z.B. AB123CD',
       plateHint:'Kennzeichen eingeben oder mit der Kamera scannen (italienisches Format: AB123CD).',
       secArticle:'Artikelnummer / OE', articlePH:'Artikelnummer eingeben...',
