@@ -1,0 +1,770 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <title>PartsApp – Ricambi Auto | HVS &amp; TIZ</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Titillium+Web:wght@400;600;700;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
+  <style>
+    :root{
+      --rosso:#c8102e;          /* rosso corsa */
+      --rosso-dark:#9c0c23;
+      --verde:#008c45;          /* tricolore verde */
+      --bianco:#f4f5f0;         /* tricolore bianco */
+      --tricolore-rosso:#cd212a;
+      --ink:#15191f;
+      --ink-soft:#3d454f;
+      --muted:#6b7480;
+      --bg:#f2f4f7;
+      --card:#ffffff;
+      --line:#e3e7ee;
+      --targa-blu:#003399;
+      --ok:#1e7d3c;
+      --err:#b00020;
+      --radius:16px;
+      --shadow:0 4px 18px rgba(21,25,31,.07);
+    }
+    *{box-sizing:border-box;margin:0;padding:0}
+    html{scroll-behavior:smooth}
+    body{
+      font-family:'Titillium Web',-apple-system,'Segoe UI',Roboto,Arial,sans-serif;
+      background:var(--bg);color:var(--ink);min-height:100vh;
+      padding-bottom:60px;
+    }
+
+    /* ---------- header ---------- */
+    .tricolore{height:5px;display:flex}
+    .tricolore span{flex:1}
+    .tricolore span:nth-child(1){background:#008c45}
+    .tricolore span:nth-child(2){background:#f4f5f0}
+    .tricolore span:nth-child(3){background:#cd212a}
+    header.topbar{
+      position:sticky;top:0;z-index:100;
+      background:var(--ink);color:#fff;
+      box-shadow:0 2px 12px rgba(0,0,0,.25);
+    }
+    .topbar-inner{
+      max-width:960px;margin:0 auto;
+      display:flex;align-items:center;justify-content:space-between;
+      gap:12px;padding:12px 16px;
+    }
+    .brand{display:flex;align-items:center;gap:12px;min-width:0}
+    .brand-badge{
+      width:42px;height:42px;border-radius:10px;flex-shrink:0;
+      background:linear-gradient(145deg,var(--rosso),var(--rosso-dark));
+      display:grid;place-items:center;font-size:1.25rem;color:#fff;
+    }
+    .brand h1{font-size:1.05rem;font-weight:900;letter-spacing:.4px;line-height:1.15;white-space:nowrap}
+    .brand small{display:block;font-size:.72rem;font-weight:600;color:#aeb6c2;letter-spacing:1.2px;text-transform:uppercase}
+    .lang-switch{display:flex;gap:8px;flex-shrink:0}
+    .lang-switch button{
+      border:2px solid transparent;background:none;padding:2px;border-radius:8px;
+      cursor:pointer;line-height:0;opacity:.55;transition:opacity .15s,border-color .15s,transform .15s;
+    }
+    .lang-switch button img{width:34px;height:25px;border-radius:5px;display:block;object-fit:cover}
+    .lang-switch button.active{opacity:1;border-color:#fff;transform:scale(1.05)}
+    .lang-switch button:focus-visible{outline:2px solid #fff;outline-offset:2px}
+
+    /* ---------- layout ---------- */
+    .container{max-width:960px;margin:0 auto;padding:20px 16px 0}
+    .panel{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);padding:18px;margin-bottom:16px}
+    .panel-title{
+      display:flex;align-items:center;gap:10px;margin-bottom:12px;
+      font-size:.8rem;font-weight:700;letter-spacing:1.4px;text-transform:uppercase;color:var(--ink-soft);
+    }
+    .panel-title i{color:var(--rosso)}
+    .panel-title::after{content:'';flex:1;height:1px;background:var(--line)}
+
+    /* ---------- order type toggle ---------- */
+    .order-toggle{
+      position:relative;display:flex;background:#e8ebf1;border-radius:999px;padding:5px;
+      max-width:460px;margin:0 auto 20px;
+    }
+    .order-toggle input{position:absolute;opacity:0;pointer-events:none}
+    .order-toggle label{
+      flex:1;text-align:center;padding:11px 8px;cursor:pointer;border-radius:999px;
+      font-weight:700;font-size:.95rem;color:var(--ink-soft);position:relative;z-index:2;
+      transition:color .25s;user-select:none;
+    }
+    .toggle-indicator{
+      position:absolute;top:5px;left:5px;width:calc(50% - 5px);height:calc(100% - 10px);
+      background:linear-gradient(135deg,var(--rosso),var(--rosso-dark));border-radius:999px;z-index:1;
+      transition:transform .3s cubic-bezier(.4,0,.2,1);
+      box-shadow:0 3px 10px rgba(200,16,46,.35);
+    }
+    #typePreventivo:checked ~ .toggle-indicator{transform:translateX(100%)}
+    #typeOrdine:checked ~ label[for="typeOrdine"],
+    #typePreventivo:checked ~ label[for="typePreventivo"]{color:#fff}
+
+    /* ---------- targa (italian plate look) ---------- */
+    .targa{
+      display:flex;align-items:stretch;height:64px;border-radius:10px;overflow:hidden;
+      border:2px solid #1c1c1c;box-shadow:var(--shadow);background:#fff;flex:1;min-width:0;
+    }
+    .targa .band{
+      width:34px;flex-shrink:0;background:var(--targa-blu);color:#ffd200;
+      display:flex;flex-direction:column;align-items:center;justify-content:space-between;
+      padding:6px 0;font-size:.6rem;font-weight:700;
+    }
+    .targa .band .stars{font-size:.55rem;letter-spacing:-1px}
+    .targa .band .country{color:#fff;font-size:.85rem;font-weight:900}
+    .targa input{
+      flex:1;border:0;outline:0;min-width:0;
+      font-family:'Titillium Web',monospace;font-size:1.6rem;font-weight:900;letter-spacing:.35em;
+      text-align:center;text-transform:uppercase;color:#1c1c1c;background:#fff;
+    }
+    .targa input::placeholder{letter-spacing:.08em;font-size:1rem;font-weight:600;color:#9aa3ae}
+    .input-row{display:flex;gap:12px;align-items:stretch}
+    .cam-btn{
+      width:64px;flex-shrink:0;border-radius:12px;border:1px solid var(--line);background:#fff;
+      display:grid;place-items:center;font-size:1.35rem;color:var(--rosso);cursor:pointer;
+      box-shadow:var(--shadow);transition:transform .12s,background .15s;
+    }
+    .cam-btn:hover{background:#fff5f6}
+    .cam-btn:active{transform:scale(.95)}
+    .field{
+      flex:1;display:flex;align-items:center;gap:10px;background:#fff;border:1px solid var(--line);
+      border-radius:12px;padding:0 14px;box-shadow:var(--shadow);min-width:0;
+    }
+    .field i{color:var(--muted)}
+    .field input{flex:1;border:0;outline:0;font:inherit;font-size:1rem;padding:16px 0;min-width:0;background:none}
+    .hint{font-size:.82rem;color:var(--muted);margin-top:8px;line-height:1.45}
+    .inline-error{
+      display:none;margin-top:10px;padding:10px 14px;border-radius:10px;
+      background:#fdecef;color:var(--err);border:1px solid #f5c6cf;font-size:.9rem;font-weight:600;
+    }
+    .inline-error.show{display:block}
+
+    /* ---------- parts grid ---------- */
+    .sections{display:grid;grid-template-columns:repeat(2,1fr);gap:14px}
+    .section{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);overflow:hidden}
+    .section h2{
+      display:flex;align-items:center;gap:10px;padding:13px 16px;
+      font-size:.82rem;font-weight:700;letter-spacing:1.2px;
+      background:var(--ink);color:#fff;border-bottom:3px solid var(--rosso);
+    }
+    .section h2 i{color:#ffb3bf}
+    .section .items{padding:8px}
+    .section label{
+      display:flex;align-items:center;gap:12px;padding:10px 10px;border-radius:10px;cursor:pointer;
+      transition:background .15s;user-select:none;
+    }
+    .section label:hover{background:#f7f8fb}
+    .section label i{font-size:1.15rem;color:var(--ink-soft);width:30px;text-align:center;flex-shrink:0}
+    .section label span{font-size:.95rem}
+    input[type="checkbox"]{
+      appearance:none;-webkit-appearance:none;flex-shrink:0;
+      width:24px;height:24px;border:2px solid #b9c1cc;border-radius:7px;position:relative;
+      cursor:pointer;transition:border-color .15s,background .15s;
+    }
+    input[type="checkbox"]:checked{background:var(--rosso);border-color:var(--rosso)}
+    input[type="checkbox"]:checked::after{
+      content:'';position:absolute;left:7px;top:3px;width:6px;height:12px;
+      border:solid #fff;border-width:0 3px 3px 0;transform:rotate(42deg);
+    }
+    input[type="checkbox"]:focus-visible{outline:2px solid var(--rosso);outline-offset:2px}
+    .section label:has(input:checked){background:#fdf1f3}
+    .section label:has(input:checked) i{color:var(--rosso)}
+
+    /* ---------- options ---------- */
+    .options-grid{display:flex;flex-wrap:wrap;gap:14px}
+    .option-card{
+      flex:1;min-width:230px;background:#fafbfd;border:1px solid var(--line);
+      border-radius:12px;padding:14px;
+    }
+    .option-card strong{display:block;font-size:.85rem;letter-spacing:.6px;text-transform:uppercase;color:var(--ink-soft);margin-bottom:6px}
+    .option-card label{
+      display:flex;align-items:center;gap:10px;padding:8px 6px;border-radius:8px;cursor:pointer;font-size:.95rem;
+    }
+    .option-card label:hover{background:#f1f3f8}
+    input[type="radio"]{
+      appearance:none;-webkit-appearance:none;width:20px;height:20px;flex-shrink:0;
+      border:2px solid #b9c1cc;border-radius:50%;position:relative;cursor:pointer;transition:border-color .15s;
+    }
+    input[type="radio"]:checked{border-color:var(--rosso)}
+    input[type="radio"]:checked::after{
+      content:'';position:absolute;inset:3px;border-radius:50%;background:var(--rosso);
+    }
+    input[type="radio"]:focus-visible{outline:2px solid var(--rosso);outline-offset:2px}
+
+    /* ---------- notes / file ---------- */
+    textarea{
+      width:100%;min-height:96px;padding:12px;border-radius:10px;border:1px solid var(--line);
+      font:inherit;font-size:.95rem;resize:vertical;outline:none;transition:border-color .15s;
+    }
+    textarea:focus{border-color:var(--rosso)}
+    .file-row{margin-top:12px;font-size:.88rem;color:var(--muted)}
+    .file-row label{display:block;margin-bottom:6px;font-weight:600;color:var(--ink-soft)}
+    .file-row input[type="file"]{font-size:.85rem}
+
+    /* ---------- submit ---------- */
+    .submit-btn{
+      width:100%;padding:17px;border-radius:14px;border:0;cursor:pointer;
+      background:linear-gradient(135deg,var(--rosso),var(--rosso-dark));color:#fff;
+      font-family:inherit;font-weight:900;font-size:1.12rem;letter-spacing:.5px;
+      box-shadow:0 8px 26px rgba(200,16,46,.32);
+      transition:transform .12s,box-shadow .15s,opacity .15s;
+      display:flex;align-items:center;justify-content:center;gap:10px;
+    }
+    .submit-btn:hover{box-shadow:0 10px 30px rgba(200,16,46,.4)}
+    .submit-btn:active{transform:scale(.985)}
+    .submit-btn:disabled{opacity:.65;cursor:wait;transform:none}
+
+    /* ---------- camera overlay ---------- */
+    #cameraOverlay{
+      position:fixed;inset:0;display:none;z-index:1000;background:rgba(0,0,0,.92);
+      flex-direction:column;align-items:center;justify-content:center;
+    }
+    #cameraOverlay.open{display:flex}
+    #cameraVideo{width:100%;height:100%;object-fit:cover;position:absolute;inset:0}
+    .cam-frame{
+      position:relative;z-index:2;width:min(82vw,420px);aspect-ratio:43/12;
+      border:3px solid rgba(255,255,255,.85);border-radius:12px;
+      box-shadow:0 0 0 100vmax rgba(0,0,0,.35);
+    }
+    #cameraControls{position:absolute;bottom:max(28px,env(safe-area-inset-bottom));left:0;right:0;display:flex;gap:12px;justify-content:center;z-index:3}
+    .control-btn{
+      border:0;background:#fff;color:var(--ink);padding:14px 22px;border-radius:999px;
+      font-family:inherit;font-weight:700;font-size:.95rem;cursor:pointer;
+      display:flex;align-items:center;gap:8px;
+    }
+    .control-btn.primary{background:var(--rosso);color:#fff}
+    #ocrLoader{
+      position:absolute;top:18%;left:50%;transform:translateX(-50%);z-index:3;display:none;
+      background:rgba(0,0,0,.7);color:#fff;padding:10px 18px;border-radius:999px;font-weight:600;
+    }
+    #ocrLoader.show{display:flex;align-items:center;gap:10px}
+    .spinner{
+      width:18px;height:18px;border:3px solid rgba(255,255,255,.3);border-top-color:#fff;
+      border-radius:50%;animation:spin .8s linear infinite;flex-shrink:0;
+    }
+    @keyframes spin{to{transform:rotate(360deg)}}
+
+    /* ---------- toast ---------- */
+    #toast{
+      position:fixed;left:50%;bottom:22px;transform:translateX(-50%) translateY(120%);
+      background:var(--ink);color:#fff;padding:13px 20px;border-radius:12px;z-index:1100;
+      font-weight:600;font-size:.95rem;box-shadow:0 8px 26px rgba(0,0,0,.3);
+      transition:transform .3s cubic-bezier(.4,0,.2,1);max-width:92vw;text-align:center;
+      display:flex;align-items:center;gap:10px;
+    }
+    #toast.show{transform:translateX(-50%) translateY(0)}
+    #toast.ok{background:var(--ok)}
+    #toast.err{background:var(--err)}
+
+    .lang-fade{animation:fadeLang .3s ease}
+    @keyframes fadeLang{from{opacity:.35}to{opacity:1}}
+
+    footer{max-width:960px;margin:24px auto 0;padding:0 16px;font-size:.78rem;color:var(--muted);text-align:center}
+
+    @media(max-width:760px){
+      .sections{grid-template-columns:1fr}
+      .brand h1{font-size:.95rem}
+      .targa input{font-size:1.3rem;letter-spacing:.25em}
+      .cam-btn{width:58px}
+    }
+  </style>
+</head>
+<body>
+
+  <header class="topbar">
+    <div class="tricolore"><span></span><span></span><span></span></div>
+    <div class="topbar-inner">
+      <div class="brand">
+        <div class="brand-badge"><i class="fas fa-car-side"></i></div>
+        <h1>PartsApp<small data-i18n="tagline">Ricambi auto · HVS &amp; TIZ</small></h1>
+      </div>
+      <nav class="lang-switch" aria-label="Lingua / Sprache">
+        <button type="button" id="lang-it" aria-label="Italiano"><img src="https://flagcdn.com/w40/it.png" alt="IT"></button>
+        <button type="button" id="lang-de" aria-label="Deutsch"><img src="https://flagcdn.com/w40/de.png" alt="DE"></button>
+      </nav>
+    </div>
+  </header>
+
+  <main class="container">
+    <form id="orderForm" novalidate>
+
+      <!-- order type -->
+      <div class="order-toggle" role="radiogroup" aria-label="Tipo di richiesta">
+        <input type="radio" name="orderType" id="typeOrdine" value="ordine" checked>
+        <input type="radio" name="orderType" id="typePreventivo" value="preventivo">
+        <label for="typeOrdine" data-i18n="typeOrder">🛒 Ordine</label>
+        <label for="typePreventivo" data-i18n="typeQuote">📄 Preventivo</label>
+        <span class="toggle-indicator" aria-hidden="true"></span>
+      </div>
+
+      <!-- vehicle / plate -->
+      <section class="panel">
+        <div class="panel-title"><i class="fas fa-car"></i><span data-i18n="secVehicle">Veicolo</span></div>
+        <div class="input-row">
+          <div class="targa">
+            <div class="band"><span class="stars">★★★<br>★&nbsp;&nbsp;★<br>★★★</span><span class="country">I</span></div>
+            <input id="plateInput" type="text" autocomplete="off" autocapitalize="characters"
+                   spellcheck="false" maxlength="8" data-i18n-ph="platePH" placeholder="Targa · es. AB123CD">
+          </div>
+          <button type="button" id="plateCam" class="cam-btn" data-i18n-title="camTitle" title="Scansiona con la fotocamera">
+            <i class="fas fa-camera"></i>
+          </button>
+        </div>
+        <div class="hint" data-i18n="plateHint">Inserire la targa oppure scansionarla con la fotocamera (formato italiano: AB123CD).</div>
+      </section>
+
+      <!-- article number -->
+      <section class="panel">
+        <div class="panel-title"><i class="fas fa-barcode"></i><span data-i18n="secArticle">Numero articolo / OE</span></div>
+        <div class="input-row">
+          <div class="field">
+            <i class="fas fa-hashtag"></i>
+            <input id="articleInput" type="text" autocomplete="off" spellcheck="false"
+                   data-i18n-ph="articlePH" placeholder="Inserire numero articolo...">
+          </div>
+          <button type="button" id="articleCam" class="cam-btn" data-i18n-title="camTitle" title="Scansiona con la fotocamera">
+            <i class="fas fa-camera"></i>
+          </button>
+        </div>
+        <div class="inline-error" id="formError" role="alert"></div>
+      </section>
+
+      <!-- parts -->
+      <div class="sections" id="sections"></div>
+
+      <!-- options -->
+      <section class="panel" style="margin-top:16px">
+        <div class="panel-title"><i class="fas fa-sliders"></i><span data-i18n="optTitle">Opzioni d'ordine</span></div>
+        <div class="options-grid">
+          <div class="option-card">
+            <strong data-i18n="optDelivery">Tempi di consegna</strong>
+            <label><input type="radio" name="delivery" value="urgent"><span data-i18n="optDeliveryUrgent">🚀 Urgente</span></label>
+            <label><input type="radio" name="delivery" value="48h" checked><span data-i18n="optDelivery48">⏱️ Entro 48 ore</span></label>
+          </div>
+          <div class="option-card">
+            <strong data-i18n="optPriority">Priorità</strong>
+            <label><input type="radio" name="priority" value="quality" checked><span data-i18n="optPriorityQuality">⭐ Qualità</span></label>
+            <label><input type="radio" name="priority" value="price"><span data-i18n="optPriorityPrice">💰 Prezzo</span></label>
+          </div>
+        </div>
+      </section>
+
+      <!-- notes + file -->
+      <section class="panel">
+        <div class="panel-title"><i class="fas fa-pen"></i><span data-i18n="secNotes">Note</span></div>
+        <textarea id="notes" data-i18n-ph="notesPH" placeholder="Note o richieste aggiuntive..."></textarea>
+        <div class="file-row">
+          <label for="file" data-i18n="fileLabel">Allega foto (salvate solo localmente, non inviate)</label>
+          <input type="file" id="file" multiple accept="image/*">
+        </div>
+      </section>
+
+      <button type="submit" class="submit-btn" id="sendBtn">
+        <i class="fas fa-paper-plane"></i><span data-i18n="send">Invia richiesta</span>
+      </button>
+    </form>
+  </main>
+
+  <footer>PartsApp · HVS &amp; TIZ · <span data-i18n="footer">Servizio ricambi per officine in Alto Adige / Italia</span></footer>
+
+  <!-- camera overlay -->
+  <div id="cameraOverlay" aria-hidden="true" role="dialog" aria-modal="true">
+    <video id="cameraVideo" autoplay playsinline muted></video>
+    <div class="cam-frame" aria-hidden="true"></div>
+    <div id="ocrLoader"><span class="spinner"></span><span data-i18n="ocrLoading">Riconoscimento testo...</span></div>
+    <div id="cameraControls">
+      <button type="button" id="captureBtn" class="control-btn primary"><i class="fas fa-camera"></i><span data-i18n="camShot">Scatta</span></button>
+      <button type="button" id="closeCam" class="control-btn"><i class="fas fa-xmark"></i><span data-i18n="camClose">Chiudi</span></button>
+    </div>
+  </div>
+
+  <!-- fallback: photo upload when live camera is unavailable -->
+  <input type="file" id="ocrFallbackFile" accept="image/*" capture="environment" hidden>
+
+  <div id="toast" role="status"></div>
+
+<script>
+(function(){
+  'use strict';
+
+  // ---------------- configuration ----------------
+  const WEB3FORMS_ENDPOINT = 'https://api.web3forms.com/submit';
+  const WEB3FORMS_KEY = '608134d6-3fca-4824-985f-c0831635d5ab';
+  const PLATE_RE = /[A-Z]{2}[0-9]{3}[A-Z]{2}/;   // targa italiana: AB123CD
+
+  // ---------------- i18n ----------------
+  const I18N = {
+    it: {
+      tagline:'Ricambi auto · HVS & TIZ',
+      typeOrder:'🛒 Ordine', typeQuote:'📄 Preventivo',
+      secVehicle:'Veicolo', platePH:'Targa · es. AB123CD',
+      plateHint:'Inserire la targa oppure scansionarla con la fotocamera (formato italiano: AB123CD).',
+      secArticle:'Numero articolo / OE', articlePH:'Inserire numero articolo...',
+      optTitle:"Opzioni d'ordine", optDelivery:'Tempi di consegna',
+      optDeliveryUrgent:'🚀 Urgente', optDelivery48:'⏱️ Entro 48 ore',
+      optPriority:'Priorità', optPriorityQuality:'⭐ Qualità', optPriorityPrice:'💰 Prezzo',
+      secNotes:'Note', notesPH:'Note o richieste aggiuntive...',
+      fileLabel:'Allega foto (salvate solo localmente, non inviate)',
+      send:'Invia richiesta', sending:'Invio in corso...',
+      camTitle:'Scansiona con la fotocamera', camShot:'Scatta', camClose:'Chiudi',
+      ocrLoading:'Riconoscimento testo...',
+      ocrNothing:'Nessun testo riconosciuto, riprovare.',
+      camDenied:'Accesso alla fotocamera negato. Consentire i permessi o caricare una foto.',
+      camHttps:'La fotocamera richiede una connessione HTTPS.',
+      camFail:'Impossibile avviare la fotocamera. È possibile caricare una foto.',
+      errRequired:'Inserire la targa OPPURE un numero articolo.',
+      sentOk:'Richiesta inviata con successo ✅',
+      sentErr:'Invio non riuscito. Riprovare.',
+      footer:'Servizio ricambi per officine in Alto Adige / Italia',
+      subject:'PartsApp – nuova richiesta ricambi',
+      fields:{type:'Tipo richiesta', plate:'Targa', article:'Numero articolo', parts:'Ricambi', delivery:'Consegna', priority:'Priorità', notes:'Note'},
+      typeValues:{ordine:'Ordine', preventivo:'Preventivo'},
+      categories:['MANUTENZIONE','IMPIANTO FRENANTE','TELAIO / SOSPENSIONI','BATTERIA / ELETTRICO'],
+      items:[
+        ['Tutti i filtri','Filtro aria','Filtro olio','Filtro carburante','Filtro abitacolo'],
+        ['Dischi freno anteriori','Pasticche anteriori','Sensore usura anteriore','Dischi freno posteriori','Pasticche posteriori','Sensore usura posteriore','Ganasce freno','Cilindretto freno'],
+        ['Ammortizzatori anteriori','Ammortizzatori posteriori','Bracci oscillanti','Testine sterzo'],
+        ['Batteria','Alternatore','Motorino di avviamento']
+      ]
+    },
+    de: {
+      tagline:'KFZ-Ersatzteile · HVS & TIZ',
+      typeOrder:'🛒 Bestellung', typeQuote:'📄 Kostenvoranschlag',
+      secVehicle:'Fahrzeug', platePH:'Kennzeichen · z.B. AB123CD',
+      plateHint:'Kennzeichen eingeben oder mit der Kamera scannen (italienisches Format: AB123CD).',
+      secArticle:'Artikelnummer / OE', articlePH:'Artikelnummer eingeben...',
+      optTitle:'Bestelloptionen', optDelivery:'Lieferzeit',
+      optDeliveryUrgent:'🚀 Dringend', optDelivery48:'⏱️ Innerhalb 48h',
+      optPriority:'Priorität', optPriorityQuality:'⭐ Qualität', optPriorityPrice:'💰 Preis',
+      secNotes:'Notizen', notesPH:'Zusätzliche Notizen oder Wünsche...',
+      fileLabel:'Fotos anhängen (nur lokal gespeichert, werden nicht gesendet)',
+      send:'Anfrage senden', sending:'Wird gesendet...',
+      camTitle:'Mit Kamera scannen', camShot:'Foto', camClose:'Schließen',
+      ocrLoading:'Erkenne Text...',
+      ocrNothing:'Kein Text erkannt, bitte erneut versuchen.',
+      camDenied:'Kamerazugriff verweigert. Bitte Berechtigung erlauben oder Foto hochladen.',
+      camHttps:'Die Kamera benötigt eine HTTPS-Verbindung.',
+      camFail:'Kamera konnte nicht gestartet werden. Alternativ Foto hochladen.',
+      errRequired:'Bitte Kennzeichen ODER Artikelnummer eingeben.',
+      sentOk:'Anfrage erfolgreich gesendet ✅',
+      sentErr:'Senden fehlgeschlagen. Bitte erneut versuchen.',
+      footer:'Ersatzteilservice für Werkstätten in Südtirol / Italien',
+      subject:'PartsApp – neue Ersatzteil-Anfrage',
+      fields:{type:'Anfragetyp', plate:'Kennzeichen', article:'Artikelnummer', parts:'Ersatzteile', delivery:'Lieferzeit', priority:'Priorität', notes:'Notizen'},
+      typeValues:{ordine:'Bestellung', preventivo:'Kostenvoranschlag'},
+      categories:['WARTUNG','BREMSSYSTEM','FAHRWERK','BATTERIE / ELEKTRIK'],
+      items:[
+        ['Alle Filter','Luftfilter','Ölfilter','Kraftstofffilter','Innenraumfilter'],
+        ['Vordere Bremsscheiben','Vordere Bremsbeläge','Verschleißanzeiger vorne','Hintere Bremsscheiben','Hintere Bremsbeläge','Verschleißanzeiger hinten','Bremsbacken-Satz','Radbremszylinder'],
+        ['Vordere Stoßdämpfer','Hintere Stoßdämpfer','Querlenker','Spurstangenköpfe'],
+        ['Batterie','Lichtmaschine','Anlasser']
+      ]
+    }
+  };
+
+  // icons per category/item position – language independent
+  const CATEGORY_ICONS = ['fa-oil-can','fa-circle-stop','fa-car-burst','fa-car-battery'];
+  const ITEM_ICONS = [
+    ['fa-filter','fa-wind','fa-oil-can','fa-gas-pump','fa-snowflake'],
+    ['fa-compact-disc','fa-circle-stop','fa-triangle-exclamation','fa-compact-disc','fa-circle-stop','fa-triangle-exclamation','fa-gears','fa-gear'],
+    ['fa-screwdriver-wrench','fa-screwdriver-wrench','fa-wrench','fa-bullseye'],
+    ['fa-battery-full','fa-bolt','fa-play']
+  ];
+
+  // ---------------- state ----------------
+  let currentLang = (navigator.language || 'it').slice(0,2);
+  if (!I18N[currentLang]) currentLang = 'it';   // default: Italian market
+
+  // ---------------- dom shortcuts ----------------
+  const $ = id => document.getElementById(id);
+  const form = $('orderForm');
+  const overlay = $('cameraOverlay');
+  const videoEl = $('cameraVideo');
+  const ocrLoader = $('ocrLoader');
+  const toast = $('toast');
+
+  // ---------------- build parts sections (once – state survives language switch) ----------------
+  function buildSections(){
+    const host = $('sections');
+    host.innerHTML = I18N.it.categories.map((_, c) => `
+      <section class="section">
+        <h2><i class="fas ${CATEGORY_ICONS[c]}"></i><span data-cat="${c}"></span></h2>
+        <div class="items">
+          ${I18N.it.items[c].map((_, i) => `
+            <label>
+              <input type="checkbox" data-part="${c}:${i}">
+              <i class="fas ${ITEM_ICONS[c][i]}"></i>
+              <span data-item="${c}:${i}"></span>
+            </label>`).join('')}
+        </div>
+      </section>`).join('');
+  }
+
+  // ---------------- apply language (text swap only, no re-render) ----------------
+  function applyLang(lang){
+    currentLang = lang;
+    const L = I18N[lang];
+    document.documentElement.lang = lang;
+
+    document.querySelectorAll('[data-i18n]').forEach(el => { if (L[el.dataset.i18n]) el.textContent = L[el.dataset.i18n]; });
+    document.querySelectorAll('[data-i18n-ph]').forEach(el => { if (L[el.dataset.i18nPh]) el.placeholder = L[el.dataset.i18nPh]; });
+    document.querySelectorAll('[data-i18n-title]').forEach(el => { if (L[el.dataset.i18nTitle]) el.title = L[el.dataset.i18nTitle]; });
+    document.querySelectorAll('[data-cat]').forEach(el => { el.textContent = L.categories[+el.dataset.cat]; });
+    document.querySelectorAll('[data-item]').forEach(el => {
+      const [c, i] = el.dataset.item.split(':').map(Number);
+      el.textContent = L.items[c][i];
+    });
+
+    $('lang-it').classList.toggle('active', lang === 'it');
+    $('lang-de').classList.toggle('active', lang === 'de');
+
+    document.body.classList.remove('lang-fade');
+    void document.body.offsetWidth;
+    document.body.classList.add('lang-fade');
+
+    try { localStorage.setItem('partsapp-lang', lang); } catch(e){}
+  }
+
+  // ---------------- toast ----------------
+  let toastTimer = null;
+  function showToast(msg, kind){
+    toast.textContent = msg;
+    toast.className = kind ? kind : '';
+    toast.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => toast.classList.remove('show'), 4500);
+  }
+
+  // ---------------- camera + OCR ----------------
+  let currentStream = null;
+  let currentTarget = null;   // 'plateInput' | 'articleInput'
+  let ocrWorker = null;
+
+  async function getOcrWorker(){
+    if (ocrWorker) return ocrWorker;
+    ocrWorker = await Tesseract.createWorker('eng');
+    await ocrWorker.setParameters({
+      tessedit_char_whitelist: 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-./ ',
+      tessedit_pageseg_mode: '7'   // single text line (plates / part numbers)
+    });
+    return ocrWorker;
+  }
+
+  async function startCamera(){
+    if (!window.isSecureContext) throw Object.assign(new Error('insecure'), { code:'https' });
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) throw Object.assign(new Error('unsupported'), { code:'fail' });
+
+    const constraintsList = [
+      { video:{ facingMode:{ ideal:'environment' }, width:{ ideal:1920 } }, audio:false },
+      { video:true, audio:false }
+    ];
+    let lastErr = null;
+    for (const c of constraintsList){
+      try {
+        currentStream = await navigator.mediaDevices.getUserMedia(c);
+        videoEl.srcObject = currentStream;
+        await videoEl.play();
+        return;
+      } catch(err){ lastErr = err; }
+    }
+    throw lastErr || Object.assign(new Error('fail'), { code:'fail' });
+  }
+
+  function stopCamera(){
+    if (currentStream){ currentStream.getTracks().forEach(t => t.stop()); currentStream = null; }
+    videoEl.srcObject = null;
+  }
+
+  function closeOverlay(){
+    stopCamera();
+    overlay.classList.remove('open');
+    overlay.setAttribute('aria-hidden','true');
+    ocrLoader.classList.remove('show');
+  }
+
+  async function openCamera(targetId){
+    currentTarget = targetId;
+    const L = I18N[currentLang];
+    overlay.classList.add('open');
+    overlay.setAttribute('aria-hidden','false');
+    try {
+      await startCamera();
+    } catch(err){
+      closeOverlay();
+      let msg = L.camFail;
+      if (err && err.name === 'NotAllowedError') msg = L.camDenied;
+      else if (err && err.code === 'https') msg = L.camHttps;
+      showToast(msg, 'err');
+      // graceful fallback: let the user take/upload a photo instead
+      $('ocrFallbackFile').click();
+    }
+  }
+
+  function preprocess(canvas){
+    const ctx = canvas.getContext('2d');
+    try {
+      const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+      const d = imgData.data, contrast = 1.35, brightness = 6;
+      for (let i = 0; i < d.length; i += 4){
+        const v = 0.299*d[i] + 0.587*d[i+1] + 0.114*d[i+2];
+        const nv = Math.max(0, Math.min(255, (v-128)*contrast + 128 + brightness));
+        d[i] = d[i+1] = d[i+2] = nv;
+      }
+      ctx.putImageData(imgData, 0, 0);
+    } catch(e){ /* canvas tainted or too large – OCR on raw image instead */ }
+    return canvas;
+  }
+
+  function extractResult(rawText, targetId){
+    let text = (rawText || '').toUpperCase().replace(/[^A-Z0-9\-./]/g, '');
+    if (targetId === 'plateInput'){
+      const m = text.replace(/[^A-Z0-9]/g,'').match(PLATE_RE);
+      return m ? m[0] : text.slice(0, 8);
+    }
+    return text.slice(0, 30);
+  }
+
+  async function runOcr(imageSource, targetId){
+    const L = I18N[currentLang];
+    ocrLoader.classList.add('show');
+    try {
+      const worker = await getOcrWorker();
+      const { data } = await worker.recognize(imageSource);
+      const result = extractResult(data && data.text, targetId);
+      if (result){
+        $(targetId).value = result;
+        closeOverlay();
+        showToast('✔ ' + result, 'ok');
+      } else {
+        showToast(L.ocrNothing, 'err');
+      }
+    } catch(e){
+      showToast(L.ocrNothing, 'err');
+    } finally {
+      ocrLoader.classList.remove('show');
+    }
+  }
+
+  async function captureAndProcess(){
+    if (!currentTarget) return;
+    const canvas = document.createElement('canvas');
+    canvas.width = videoEl.videoWidth || 1280;
+    canvas.height = videoEl.videoHeight || 720;
+    canvas.getContext('2d').drawImage(videoEl, 0, 0, canvas.width, canvas.height);
+    await runOcr(preprocess(canvas).toDataURL('image/png'), currentTarget);
+  }
+
+  // ---------------- validation + send ----------------
+  function setError(msg){
+    const box = $('formError');
+    if (msg){ box.textContent = msg; box.classList.add('show'); }
+    else { box.textContent = ''; box.classList.remove('show'); }
+  }
+
+  function gather(){
+    const L = I18N[currentLang];
+    const fd = new FormData();
+    fd.append('access_key', WEB3FORMS_KEY);
+    fd.append('subject', L.subject);
+    fd.append('from_name', 'PartsApp');
+    fd.append('botcheck', '');   // honeypot – must stay empty
+
+    const type = form.querySelector('input[name="orderType"]:checked');
+    fd.append(L.fields.type, type ? L.typeValues[type.value] : '');
+    fd.append(L.fields.plate, $('plateInput').value.trim().toUpperCase());
+    fd.append(L.fields.article, $('articleInput').value.trim());
+
+    const parts = [];
+    document.querySelectorAll('input[data-part]:checked').forEach(cb => {
+      const [c, i] = cb.dataset.part.split(':').map(Number);
+      parts.push(L.items[c][i]);
+    });
+    fd.append(L.fields.parts, parts.join(', '));
+
+    const radioText = name => {
+      const r = form.querySelector(`input[name="${name}"]:checked`);
+      if (!r) return '';
+      const span = r.parentElement.querySelector('span');
+      return span ? span.textContent.trim() : r.value;
+    };
+    fd.append(L.fields.delivery, radioText('delivery'));
+    fd.append(L.fields.priority, radioText('priority'));
+    fd.append(L.fields.notes, $('notes').value.trim());
+    return fd;
+  }
+
+  async function onSubmit(ev){
+    ev.preventDefault();
+    const L = I18N[currentLang];
+    const sb = $('sendBtn');
+
+    setError('');
+    const plate = $('plateInput').value.trim();
+    const article = $('articleInput').value.trim();
+    if (!plate && !article){
+      setError(L.errRequired);
+      $('plateInput').focus();
+      return;
+    }
+
+    sb.disabled = true;
+    const label = sb.querySelector('span');
+    label.textContent = L.sending;
+    try {
+      const res = await fetch(WEB3FORMS_ENDPOINT, { method:'POST', body: gather() });
+      let json = null;
+      try { json = await res.json(); } catch(e){}
+      if (res.ok && json && json.success){
+        showToast(L.sentOk, 'ok');
+        form.reset();
+        $('typeOrdine').checked = true;
+      } else {
+        showToast((json && json.message) ? `${L.sentErr} (${json.message})` : L.sentErr, 'err');
+      }
+    } catch(e){
+      showToast(L.sentErr, 'err');
+    } finally {
+      sb.disabled = false;
+      label.textContent = L.send;
+    }
+  }
+
+  // ---------------- wire up (each listener bound exactly once) ----------------
+  buildSections();
+
+  $('lang-it').addEventListener('click', () => applyLang('it'));
+  $('lang-de').addEventListener('click', () => applyLang('de'));
+
+  $('plateCam').addEventListener('click', () => openCamera('plateInput'));
+  $('articleCam').addEventListener('click', () => openCamera('articleInput'));
+  $('captureBtn').addEventListener('click', captureAndProcess);
+  $('closeCam').addEventListener('click', closeOverlay);
+  overlay.addEventListener('click', ev => { if (ev.target === overlay) closeOverlay(); });
+  document.addEventListener('keydown', ev => { if (ev.key === 'Escape' && overlay.classList.contains('open')) closeOverlay(); });
+
+  $('ocrFallbackFile').addEventListener('change', async ev => {
+    const f = ev.target.files && ev.target.files[0];
+    if (f && currentTarget){
+      overlay.classList.add('open');
+      await runOcr(f, currentTarget);
+      if (!currentStream) closeOverlay();
+    }
+    ev.target.value = '';
+  });
+
+  $('plateInput').addEventListener('input', ev => {
+    ev.target.value = ev.target.value.toUpperCase().replace(/[^A-Z0-9]/g, '');
+    setError('');
+  });
+  $('articleInput').addEventListener('input', () => setError(''));
+
+  form.addEventListener('submit', onSubmit);
+
+  // initial language: stored preference > browser language > Italian
+  let initial = null;
+  try { initial = localStorage.getItem('partsapp-lang'); } catch(e){}
+  applyLang(I18N[initial] ? initial : currentLang);
+})();
+</script>
+</body>
+</html>
