@@ -361,7 +361,7 @@
               <span class="country">I</span>
             </div>
             <input id="plateInput" type="text" autocomplete="off" autocapitalize="characters"
-                   spellcheck="false" maxlength="8" data-i18n-ph="platePH" placeholder="Targa · es. AB123CD">
+                   spellcheck="false" maxlength="7" data-i18n-ph="platePH" placeholder="Targa · es. AB123CD">
             <div class="band band-right"><span class="ring" aria-hidden="true"></span></div>
           </div>
           <button type="button" id="plateCam" class="cam-btn" data-i18n-title="camTitle" title="Scansiona con la fotocamera">
@@ -496,6 +496,19 @@
   const WEB3FORMS_KEY = '608134d6-3fca-4824-985f-c0831635d5ab';
   const TESSERACT_SRC = 'https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js';
   const PLATE_RE = /[A-Z]{2}[0-9]{3}[A-Z]{2}/;   // targa italiana: AB123CD
+  const PLATE_FULL_RE = /^[A-Z]{2}[0-9]{3}[A-Z]{2}$/;
+
+  // position-aware mask: chars 1-2 letters, 3-5 digits, 6-7 letters; max 7 chars
+  function formatPlate(raw){
+    let out = '';
+    for (const ch of (raw || '').toUpperCase()){
+      if (out.length >= 7) break;
+      const pos = out.length;
+      const wantsLetter = pos < 2 || pos > 4;
+      if (wantsLetter ? /[A-Z]/.test(ch) : /[0-9]/.test(ch)) out += ch;
+    }
+    return out;
+  }
 
   // ---------------- i18n ----------------
   const I18N = {
@@ -519,6 +532,7 @@
       camHttps:'La fotocamera richiede una connessione HTTPS.',
       camFail:'Impossibile avviare la fotocamera. È possibile caricare una foto.',
       errRequired:'Inserire la targa OPPURE un numero articolo.',
+      errPlate:'Targa incompleta: formato richiesto AB123CD (2 lettere, 3 cifre, 2 lettere).',
       sentOk:'Richiesta inviata con successo ✅',
       sentErr:'Invio non riuscito. Riprovare.',
       footer:'Servizio ricambi per officine in Alto Adige / Italia',
@@ -553,6 +567,7 @@
       camHttps:'Die Kamera benötigt eine HTTPS-Verbindung.',
       camFail:'Kamera konnte nicht gestartet werden. Alternativ Foto hochladen.',
       errRequired:'Bitte Kennzeichen ODER Artikelnummer eingeben.',
+      errPlate:'Kennzeichen unvollständig: Format AB123CD erforderlich (2 Buchstaben, 3 Ziffern, 2 Buchstaben).',
       sentOk:'Anfrage erfolgreich gesendet ✅',
       sentErr:'Senden fehlgeschlagen. Bitte erneut versuchen.',
       footer:'Ersatzteilservice für Werkstätten in Südtirol / Italien',
@@ -732,7 +747,7 @@
     let text = (rawText || '').toUpperCase().replace(/[^A-Z0-9\-./]/g, '');
     if (targetId === 'plateInput'){
       const m = text.replace(/[^A-Z0-9]/g,'').match(PLATE_RE);
-      return m ? m[0] : text.slice(0, 8);
+      return m ? m[0] : formatPlate(text);
     }
     return text.slice(0, 30);
   }
@@ -819,6 +834,11 @@
       $('plateInput').focus();
       return;
     }
+    if (plate && !PLATE_FULL_RE.test(plate)){
+      setError(L.errPlate);
+      $('plateInput').focus();
+      return;
+    }
 
     sb.disabled = true;
     const label = sb.querySelector('span');
@@ -869,7 +889,7 @@
   });
 
   $('plateInput').addEventListener('input', ev => {
-    ev.target.value = ev.target.value.toUpperCase().replace(/[^A-Z0-9]/g, '');
+    ev.target.value = formatPlate(ev.target.value);
     setError('');
   });
   $('articleInput').addEventListener('input', () => setError(''));
